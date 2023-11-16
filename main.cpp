@@ -12,16 +12,13 @@ int main(int argc, char **argv)
     cudalabel labels;
     unsigned int** labelinfo;
     unsigned int n;
-
-    /*    
+    
     if (argc < 2) 
     {
         std::cout << "Usage: " << argv[0] << " <image file>" << std::endl;
         return (-1);
     }
-    filename = argv[1];
-    */
-    filename = "/home/marcelo/dev/personal/github/cudalabel/samples/sample0.jpg";
+    filename = argv[1];    
 
     // Read image
     cv::Mat image;
