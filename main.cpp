@@ -38,12 +38,12 @@ int main(int argc, char **argv)
     cv::cuda::GpuMat imgpu;
     imgpu.upload(image);
 
-    //labels.setimg(image);    
-    labels.setgpuimg(imgpu);    
+    //labels.setimg(image); (or CPU)
+    labels.setgpuimg(imgpu); // or GPU    
     labels.preprocess();    
     labels.labelize();
     n = labels.lnumber();
-    std::cout << "[main] Num of labels: " << n << std::endl;
+    std::cout << "[main] Num of labels: " << n << " computed with threshold = " << labels.lmean() << std::endl;
     labelinfo = labels.getinfo();
 
     if (image.channels() == 1) 

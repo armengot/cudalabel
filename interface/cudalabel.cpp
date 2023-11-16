@@ -162,6 +162,11 @@ unsigned int cudalabel::lnumber()
     return(nlabels);
 }
 
+unsigned int cudalabel::lmean()
+{
+    return(imean);
+}
+
 unsigned int** cudalabel::getinfo() 
 {
     // Create Grid/Block
@@ -190,13 +195,14 @@ unsigned int** cudalabel::getinfo()
     for(unsigned int i=1; i<nlabels; i++)
     {
         kgetinfo<<<grid, block>>>(d_labels, gpuinfo, i, nrows, ncols);                        
-    }    
+        // gpu sync
+        //cudaDeviceSynchronize();
+    }        
+    cudaDeviceSynchronize();
     cudaError_t error = cudaGetLastError();
     if(error != cudaSuccess) 
     {
         fprintf(stderr, "ERROR: %s \n", cudaGetErrorString(error));
-    }    
-    // gpu sync
-    cudaDeviceSynchronize();
+    }        
     return(gpuinfo);
 }

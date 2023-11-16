@@ -29,14 +29,20 @@ class cudalabel
     public:
         cudalabel();
         ~cudalabel();
-
+        /* (1) */
         void setimg(const cv::Mat input);
         void setgpuimg(const cv::cuda::GpuMat input);
+        /* (2) */
         void preprocess();
+        /* (3) */
         void labelize();
+        /* (4) */
+        unsigned int** getinfo();
+        /* optional tools */
         void imgen();
         void lsave(std::string outputname);
         unsigned int lnumber();
-        unsigned int** getinfo();
+        unsigned int lmean();
+        
         
 };
