@@ -5,6 +5,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core/cuda.hpp>
+#include <opencv2/cudaarithm.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <iostream>
 #include <set>
 
@@ -87,7 +89,7 @@ cudalabel::~cudalabel()
     }
 }
 
-void cudalabel::setimg(const cv::Mat& input) 
+void cudalabel::setimg(const cv::Mat input) 
 {
     ncols = input.cols;
     nrows = input.rows;
@@ -98,13 +100,39 @@ void cudalabel::setimg(const cv::Mat& input)
     image = input.clone();
 }
 
+void cudalabel::setgpuimg(const cv::cuda::GpuMat input)
+{
+    ncols = input.cols;
+    nrows = input.rows;
+    npixel = nrows*ncols;
+    
+    cudaMallocManaged(&d_labels, npixel * sizeof(int));
+    cudaMallocManaged(&d_img, npixel * sizeof(char));
+    gpuimage = input.clone();
+}
+
 void cudalabel::preprocess()
 {
     double imin, imax;
     cv::Point minloc, maxloc;   
-    cv::minMaxLoc(image,&imin,&imax,&minloc,&maxloc);
-    imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
-	util::threshold(d_img, image.data, imean, npixel);
+    if (!gpuimage.empty())
+    {           
+        cv::cuda::GpuMat localthres;
+        cv::cuda::minMax(gpuimage,&imin,&imax);        
+        imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
+        cv::cuda::threshold(gpuimage, localthres, imean, imax, cv::THRESH_BINARY);        
+        localthres.copyTo(cv::cuda::GpuMat(gpuimage.size(), gpuimage.type(), d_img));
+    }
+    else if (!image.empty())    
+    {        
+        cv::minMaxLoc(image,&imin,&imax,&minloc,&maxloc);
+        imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
+	    util::threshold(d_img, image.data, imean, npixel);                
+    }
+    else
+    {
+        std::cerr << "No data available." << std::endl;
+    }
 }
 
 void cudalabel::labelize()

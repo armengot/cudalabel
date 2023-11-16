@@ -19,7 +19,7 @@ int main(int argc, char **argv)
         return (-1);
     }
     filename = argv[1];    
-
+    
     // Read image
     cv::Mat image;
     image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
@@ -33,13 +33,23 @@ int main(int argc, char **argv)
         std::cerr << "Image is not allocated with continuous data. Exiting..." << std::endl;
         return (-1);
     }
-    labels.setimg(image);
-    labels.preprocess();
+    std::cout << "[main] Image loaded " << filename << " type: " << image.type() << " channels number " << image.channels() << std::endl;
+
+    cv::cuda::GpuMat imgpu;
+    imgpu.upload(image);
+
+    //labels.setimg(image);    
+    labels.setgpuimg(imgpu);    
+    labels.preprocess();    
     labels.labelize();
     n = labels.lnumber();
-    std::cout << "Num of labels: " << n << std::endl;
+    std::cout << "[main] Num of labels: " << n << std::endl;
     labelinfo = labels.getinfo();
-    
+
+    if (image.channels() == 1) 
+    {    
+        cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
+    }    
     for (unsigned int i = 1; i < n; ++i) 
     {
         if (labelinfo[i])
@@ -49,15 +59,13 @@ int main(int argc, char **argv)
             int y_min = labelinfo[i][3];
             int y_max = labelinfo[i][4];    
             cv::rectangle(image, cv::Point(x_min, y_min), cv::Point(x_max, y_max), cv::Scalar(0, 0, 255), 2);    
-            std::cout << "[main] LABEL[" << i << "] = [" << labelinfo[i][0] << "," << labelinfo[i][1] << "," << labelinfo[i][2] << "," << labelinfo[i][3] << "," << labelinfo[i][4] << "]" << std::endl;
-                
+            std::cout << "[main] LABEL[" << i << "] = [" << labelinfo[i][0] << "," << labelinfo[i][1] << "," << labelinfo[i][2] << "," << labelinfo[i][3] << "," << labelinfo[i][4] << "]" << std::endl;                
         }
     }
     cv::imshow("labels", image);
     cv::waitKey(0);  
 
-    labels.imgen();
-    labels.lsave("output.png");
-    
+    // labels.imgen();
+    // labels.lsave("output.png");    
     return(0);
 }

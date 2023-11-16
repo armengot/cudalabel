@@ -1,6 +1,7 @@
 #pragma once
 
 #include <opencv2/core.hpp>
+#include <opencv2/core/cuda.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -9,10 +10,15 @@
 class cudalabel
 {
     private:
+        // needed from folkev sources
         unsigned char* d_img;
         unsigned int* d_labels;
+        // image features
         int ncols,nrows,npixel;
+        // alternative input CPU/GPU (dev/test)
         cv::Mat image;
+        cv::cuda::GpuMat gpuimage;
+        // output data
         unsigned int imean;
         unsigned int nlabels;        
         cv::cuda::GpuMat *output;
@@ -24,7 +30,8 @@ class cudalabel
         cudalabel();
         ~cudalabel();
 
-        void setimg(const cv::Mat& input);
+        void setimg(const cv::Mat input);
+        void setgpuimg(const cv::cuda::GpuMat input);
         void preprocess();
         void labelize();
         void imgen();

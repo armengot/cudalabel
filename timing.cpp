@@ -25,12 +25,17 @@ int main(int argc, char **argv)
     for(unsigned int i=0;i<filenames.size();i++)
     {
         cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
-        
-        // upload -> GPU
-        labels.setimg(image);
+        cv::cuda::GpuMat gpuimg;
 
-        // time in GPU
+        if (!image.empty())
+            gpuimg.upload(image);
+        
         auto start_time = std::chrono::high_resolution_clock::now();        
+
+        // upload -> GPU
+        //labels.setimg(image);
+        // gpu -> gpu
+        labels.setgpuimg(gpuimg);
         labels.preprocess();
         labels.labelize();
         labels.getinfo();
