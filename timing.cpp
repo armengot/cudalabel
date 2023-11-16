@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 
     cudalabel labels;
 
-    for(int i=0;i<filenames.size();i++)
+    for(unsigned int i=0;i<filenames.size();i++)
     {
         cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
         
@@ -33,9 +33,11 @@ int main(int argc, char **argv)
         auto start_time = std::chrono::high_resolution_clock::now();        
         labels.preprocess();
         labels.labelize();
+        labels.getinfo();
         auto end_time = std::chrono::high_resolution_clock::now();
         
         // download
+        labels.imgen();
         labels.lsave(outnames[i]);
         
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
