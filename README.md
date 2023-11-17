@@ -8,3 +8,82 @@ vol. 29, no. 6, pp. 1217-1230, 1 June 2018.<br/>
 * URL: https://ieeexplore.ieee.org/document/8274991
 
 Here, the FolkeV's code was download in the CUDA_CCL folder to be used as library with some other features (area and coordinates extraction) very common in OpenCV C++ libraries but not available in cv::cuda classes to be exectued on the GPU.
+
+![doc](doc.gif)
+
+## Usage
+
+- [x] Declare ```cudalabel``` class object:
+```
+cudalabel labels;
+```
+- [ ] Set image from CPU:
+```
+labels.setimg(image);
+```
+- [x] Or, alternatively, set from GPU to avoid internal uploads, depending on your code needs:
+```
+labels.setgpuimg(gpuimage);
+```
+- [x] Step (2), preprocess (uses FolkeV's code in the CPU version).
+```
+labels.preprocess();
+```
+- [x] Step (3), internal call to the Playne&Hawick (2018) cuda code.
+```
+labels.labelize();
+```
+- [x] Step (4), new functions, get the labels coordinates (internal call to kernel ```kgetinfo```):
+```
+unsigned int** labelinfo;
+labelinfo = labels.getinfo();
+```
+- [x] Release resources (required if work continues).
+```
+labels.reset();
+```
+- [ ] Optional (generate image and save results):
+```
+if (labels.imgen())
+    labels.lsave(output_name);  
+```
+## Compilation
+Download code and call ```cmake```.
+```
+$ git clone https://github.com/armengot/cudalabel
+$ cd cudalabel
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```
+
+## CPU/GPU times
+Using ```timing``` executable tool.
+Using the CPU image.
+```
+[CPU] processing image [2880x2160] with ../samples/sample0.jpg took 59 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample1.jpg took 61 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample2.jpg took 61 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample3.jpg took 61 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample4.jpg took 60 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample5.jpg took 62 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample6.jpg took 62 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample7.jpg took 62 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample8.jpg took 61 milliseconds.
+[CPU] processing image [2880x2160] with ../samples/sample9.jpg took 62 milliseconds.
+```
+Uploading the image to the GPU.
+```
+[GPU] processing image [2880x2160] with ../samples/sample0.jpg took 129 milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample1.jpg took 46  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample2.jpg took 45  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample3.jpg took 46  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample4.jpg took 47  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample5.jpg took 47  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample6.jpg took 51  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample7.jpg took 48  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample8.jpg took 47  milliseconds.
+[GPU] processing image [2880x2160] with ../samples/sample9.jpg took 49  milliseconds.
+```
+

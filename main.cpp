@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     {    
         cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
     }    
-    for (unsigned int i = 1; i < n; ++i) 
+    for (unsigned int i = 0; i < n; ++i) 
     {
         if (labelinfo[i])
         {

@@ -112,6 +112,7 @@ void cudalabel::reset()
         cpu_output = nullptr;
     }    
 }
+
 cudalabel::~cudalabel() 
 {
     reset();
@@ -170,10 +171,20 @@ void cudalabel::labelize()
     connectedComponentLabeling(d_labels, d_img, ncols, nrows);
     cudaDeviceSynchronize();
     nlabels = cudalabel_countool(d_labels, npixel, &finalabels);
-    /* check if required  
-	cv::Mat finalImage = util::postProc(d_labels, ncols, nrows); 
-	cv::imshow("Labelled image", finalImage);
-	cv::waitKey();*/
+    /* check if required 
+	cv::Mat check(nrows, ncols, CV_8UC1, cv::Scalar::all(0));
+
+	for (int i = 0; i < nrows; i++)
+    {
+		for(int j = 0; j< ncols; j++)
+        {
+			size_t idx = i * ncols + j;			
+			check.at<uchar>(i,j) = d_labels[idx];			
+		}
+	}    
+    cv::imshow("CHECKING",check);
+    cv::waitKey(0);
+    */
 }
 
 bool cudalabel::imgen()
