@@ -9,6 +9,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <iostream>
 #include <set>
+#include <unistd.h>
 
 /* project headers */
 #include <cudalabel.h>
@@ -19,13 +20,11 @@
 #define BLOCK_SIZE_X 32
 #define BLOCK_SIZE_Y 4
 
-__global__ void kgetinfo(unsigned int* d_labels, unsigned int** output, unsigned int i_current_label, int rows_number, int cols_number) 
+__global__ void kgetinfo(unsigned int* d_labels, unsigned int** outinfo, unsigned int Nlabel, int rows_number, int cols_number) 
 {
     int tid_x = blockIdx.x * blockDim.x + threadIdx.x;
     int tid_y = blockIdx.y * blockDim.y + threadIdx.y;
 
-
-    unsigned int current_label = output[i_current_label][0];    
     if (tid_x < cols_number && tid_y < rows_number) 
     {
         for (int BX = 0; BX < blockDim.x; BX++)
@@ -38,12 +37,25 @@ __global__ void kgetinfo(unsigned int* d_labels, unsigned int** output, unsigned
                 if (pixelX < cols_number && pixelY < rows_number)
                 {
                     int index = pixelY * cols_number + pixelX;
-                    if (d_labels[index]==current_label)                                         
+                    if (d_labels[index]!=0)
                     {   
-                        atomicMin(&output[i_current_label][1], pixelX);
-                        atomicMax(&output[i_current_label][2], pixelX);
-                        atomicMin(&output[i_current_label][3], pixelY);
-                        atomicMax(&output[i_current_label][4], pixelY);                                                                                                      
+                        int i;
+                        bool protect = false;
+                        for(i=0;i<Nlabel;i++)
+                        {
+                            if (d_labels[index] == outinfo[i][0])
+                            {
+                                protect = true;
+                                break;                            
+                            }
+                        }
+                        if (protect)
+                        {
+                            atomicMin(&outinfo[i][1], pixelX);
+                            atomicMax(&outinfo[i][2], pixelX);
+                            atomicMin(&outinfo[i][3], pixelY);
+                            atomicMax(&outinfo[i][4], pixelY);
+                        }
                     }                                   
                 }
             }
@@ -67,26 +79,42 @@ unsigned int cudalabel_countool(unsigned int* img, size_t N, std::set<unsigned i
     return(components);
 }
 
+/* builder */
 cudalabel::cudalabel() 
 {
 }
 
-cudalabel::~cudalabel() 
+/* destroyer */
+void cudalabel::reset()
 {
     if (d_img)
+    {
 	    cudaFree(d_img);
+        d_img = nullptr;
+    }
     if (d_labels)
-	    cudaFree(d_labels);
-    if (output)
-        output->release();
+    {
+	    cudaFree(d_labels);    
+        d_labels = nullptr;
+    }
     if (gpuinfo) 
     {
         for (int i = 0; i < nlabels; ++i) 
         {
             cudaFree(gpuinfo[i]);            
         }
-        cudaFree(gpuinfo);        
+        cudaFree(gpuinfo);     
+        gpuinfo = nullptr;   
     }
+    if (cpu_output) 
+    {        
+        delete(cpu_output);
+        cpu_output = nullptr;
+    }    
+}
+cudalabel::~cudalabel() 
+{
+    reset();
 }
 
 void cudalabel::setimg(const cv::Mat input) 
@@ -118,16 +146,18 @@ void cudalabel::preprocess()
     if (!gpuimage.empty())
     {           
         cv::cuda::GpuMat localthres;
+        localthres.create(gpuimage.size(), gpuimage.type());
         cv::cuda::minMax(gpuimage,&imin,&imax);        
         imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
-        cv::cuda::threshold(gpuimage, localthres, imean, imax, cv::THRESH_BINARY);        
+        cv::cuda::threshold(gpuimage, localthres, 0, imax, cv::THRESH_BINARY);
+        cudaDeviceSynchronize();        
         localthres.copyTo(cv::cuda::GpuMat(gpuimage.size(), gpuimage.type(), d_img));
     }
     else if (!image.empty())    
     {        
         cv::minMaxLoc(image,&imin,&imax,&minloc,&maxloc);
         imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
-	    util::threshold(d_img, image.data, imean, npixel);                
+	    util::threshold(d_img, image.data, 0, npixel);                        
     }
     else
     {
@@ -138,23 +168,57 @@ void cudalabel::preprocess()
 void cudalabel::labelize()
 {
     connectedComponentLabeling(d_labels, d_img, ncols, nrows);
+    cudaDeviceSynchronize();
     nlabels = cudalabel_countool(d_labels, npixel, &finalabels);
-    /* check if required 
-	cv::Mat finalImage = util::postProc(d_labels, ncols, nrows);
+    /* check if required  
+	cv::Mat finalImage = util::postProc(d_labels, ncols, nrows); 
 	cv::imshow("Labelled image", finalImage);
-	cv::waitKey(); */
+	cv::waitKey();*/
 }
 
-void cudalabel::imgen()
+bool cudalabel::imgen()
 {
-    output = new cv::cuda::GpuMat(nrows, ncols, CV_32SC1, d_labels);
+    if (!gpuimage.empty())
+    {
+        cpu_output = new cv::Mat(gpuimage.size(),gpuimage.type());
+        gpuimage.download(*cpu_output);        
+        return(true);
+    }
+    else if (!image.empty())
+    {
+        cpu_output = new cv::Mat(image.size(),image.type());
+        *cpu_output = image.clone();
+        return(true);
+    }
+    else
+    {
+        return(false);
+    }
 }
 
 void cudalabel::lsave(std::string outputname)
-{
-    cv::Mat result;
-    output->download(result);
-    cv::imwrite(outputname,result);
+{    
+    unsigned int totalarea = ncols*nrows;
+    if (cpu_output->channels() == 1) 
+    {    
+        cv::Mat tmp;
+        cv::cvtColor(*cpu_output, tmp, cv::COLOR_GRAY2BGR);
+        *cpu_output = tmp.clone();
+    }            
+    for (unsigned int i = 0; i < nlabels; ++i) 
+    {
+        if (gpuinfo[i])
+        {
+            int x_min = gpuinfo[i][1];
+            int x_max = gpuinfo[i][2];
+            int y_min = gpuinfo[i][3];
+            int y_max = gpuinfo[i][4];
+            unsigned int area = (y_max-y_min)*(x_max-x_min);            
+            if (area<0.8*totalarea)
+                cv::rectangle(*cpu_output, cv::Point(x_min, y_min), cv::Point(x_max, y_max), cv::Scalar(0, 255, 0), 2);            
+        }        
+    }    
+    cv::imwrite(outputname,*cpu_output);        
 }
 
 unsigned int cudalabel::lnumber()
@@ -192,13 +256,9 @@ unsigned int** cudalabel::getinfo()
         i++;
     }    
     // kernel call
-    for(unsigned int i=1; i<nlabels; i++)
-    {
-        kgetinfo<<<grid, block>>>(d_labels, gpuinfo, i, nrows, ncols);                        
-        // gpu sync
-        //cudaDeviceSynchronize();
-    }        
+    kgetinfo<<<grid, block>>>(d_labels, gpuinfo, nlabels, nrows, ncols);        
     cudaDeviceSynchronize();
+
     cudaError_t error = cudaGetLastError();
     if(error != cudaSuccess) 
     {

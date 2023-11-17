@@ -11,8 +11,8 @@ class cudalabel
 {
     private:
         // needed from folkev sources
-        unsigned char* d_img;
-        unsigned int* d_labels;
+        unsigned char* d_img = nullptr;
+        unsigned int* d_labels = nullptr;
         // image features
         int ncols,nrows,npixel;
         // alternative input CPU/GPU (dev/test)
@@ -20,11 +20,9 @@ class cudalabel
         cv::cuda::GpuMat gpuimage;
         // output data
         unsigned int imean;
-        unsigned int nlabels;        
-        cv::cuda::GpuMat *output;
-        unsigned int** gpuinfo;
+        unsigned int nlabels;                
+        unsigned int** gpuinfo = nullptr;
         std::set<unsigned int> finalabels;
-
 
     public:
         cudalabel();
@@ -39,10 +37,12 @@ class cudalabel
         /* (4) */
         unsigned int** getinfo();
         /* optional tools */
-        void imgen();
+        void reset();
+        bool imgen();
         void lsave(std::string outputname);
         unsigned int lnumber();
-        unsigned int lmean();
+        unsigned int lmean();        
+        cv::Mat *cpu_output = nullptr;
         
         
 };

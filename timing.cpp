@@ -11,6 +11,8 @@ int main(int argc, char **argv)
 {
     std::vector<std::string> filenames;
     std::vector<std::string> outnames;
+    const char flag[2][4] = {"CPU", "GPU"};
+    int twice = 0;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -19,35 +21,42 @@ int main(int argc, char **argv)
         filenames.push_back(filename);
         outnames.push_back(outname);
     }
-
+   
     cudalabel labels;
 
-    for(unsigned int i=0;i<filenames.size();i++)
+    while (twice<2)
     {
-        cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
-        cv::cuda::GpuMat gpuimg;
+        for(unsigned int i=0;i<filenames.size();i++)
+        {   
+            labels.reset();
 
-        if (!image.empty())
-            gpuimg.upload(image);
-        
-        auto start_time = std::chrono::high_resolution_clock::now();        
+            cv::Mat image = cv::imread(filenames[i], cv::IMREAD_GRAYSCALE);
+            cv::cuda::GpuMat gpuimg;
 
-        // upload -> GPU
-        //labels.setimg(image);
-        // gpu -> gpu
-        labels.setgpuimg(gpuimg);
-        labels.preprocess();
-        labels.labelize();
-        labels.getinfo();
-        auto end_time = std::chrono::high_resolution_clock::now();
-        
-        // download
-        labels.imgen();
-        labels.lsave(outnames[i]);
-        
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+            if (!image.empty())
+                gpuimg.upload(image);
+            
+            auto start_time = std::chrono::high_resolution_clock::now();        
+            /* load */
+            if (!twice)
+                labels.setimg(image);       // CPU
+            else
+                labels.setgpuimg(gpuimg);   // GPU
+            /* steps */
+            labels.preprocess();
+            labels.labelize();
+            labels.getinfo();
+            auto end_time = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+            
+            if (labels.imgen())
+                labels.lsave(outnames[i]);       
 
-        std::cout << "Processing image " << filenames[i] << " took " << duration << " milliseconds." << std::endl;
+            std::cout << "[" << flag[twice] << "] processing image [" << image.cols << "x" << image.rows << "] with " << filenames[i] << " took " << duration << " milliseconds." << std::endl;
+            
+        }
+        std::cout << std::endl;
+        twice++;
     }
 
     return 0;
