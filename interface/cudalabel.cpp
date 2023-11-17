@@ -143,21 +143,21 @@ void cudalabel::setgpuimg(const cv::cuda::GpuMat input)
 void cudalabel::preprocess()
 {
     double imin, imax;
-    cv::Point minloc, maxloc;   
+    //cv::Point minloc, maxloc;   
     if (!gpuimage.empty())
     {           
         cv::cuda::GpuMat localthres;
         localthres.create(gpuimage.size(), gpuimage.type());
         cv::cuda::minMax(gpuimage,&imin,&imax);        
-        imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
-        cv::cuda::threshold(gpuimage, localthres, 0, imax, cv::THRESH_BINARY);
+        //imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
+        cv::cuda::threshold(gpuimage, localthres, 0, imax, cv::THRESH_BINARY);        
         cudaDeviceSynchronize();        
         localthres.copyTo(cv::cuda::GpuMat(gpuimage.size(), gpuimage.type(), d_img));
     }
     else if (!image.empty())    
     {        
-        cv::minMaxLoc(image,&imin,&imax,&minloc,&maxloc);
-        imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
+        //cv::minMaxLoc(image,&imin,&imax,&minloc,&maxloc);
+        //imean = static_cast<unsigned int>(imin+((imax-imin)/2));    
 	    util::threshold(d_img, image.data, 0, npixel);                        
     }
     else

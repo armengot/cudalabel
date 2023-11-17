@@ -47,6 +47,7 @@ labels.reset();
 if (labels.imgen())
     labels.lsave(output_name);  
 ```
+
 ## Compilation
 Download code and call ```cmake```.
 ```
