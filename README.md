@@ -7,7 +7,7 @@ in IEEE Transactions on Parallel and Distributed Systems,<br/>
 vol. 29, no. 6, pp. 1217-1230, 1 June 2018.<br/>
 * URL: https://ieeexplore.ieee.org/document/8274991
 
-<img src="https://img.shields.io/badge/cuda-30%25-red">&nbsp;<img src="https://img.shields.io/badge/C%2FC%2B%2B-100%25-green">&nbsp;<img src="https://img.shields.io/badge/CMakelists.txt-25-blue">&nbsp;<img src="https://img.shields.io/badge/GNU%2FLinux-25-lightgreen">
+<img src="https://img.shields.io/badge/cuda-30%25-red">&nbsp;<img src="https://img.shields.io/badge/C%2FC%2B%2B-100%25-green">&nbsp;<img src="https://img.shields.io/badge/CMakelists.txt-tested-blue">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-20.4-pink">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-22.4-gold">
 
 
 Here, the FolkeV's code was download in the CUDA_CCL folder to be used as library with some other features (area and coordinates extraction) very common in OpenCV C++ libraries but not available in cv::cuda classes to be exectued on the GPU.
