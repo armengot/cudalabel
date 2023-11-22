@@ -115,6 +115,9 @@ void cudalabel::reset()
         image.release();
     if (!gpuimage.empty())
         gpuimage.release();
+    if (!finalabels.empty())
+        finalabels.clear();
+    nlabels = 0;        
 }
 
 cudalabel::~cudalabel() 
