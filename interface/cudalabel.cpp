@@ -84,7 +84,7 @@ cudalabel::cudalabel()
 {
 }
 
-/* destroyer */
+/* destructor */
 void cudalabel::reset()
 {
     if (d_img)
