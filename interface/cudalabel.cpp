@@ -110,7 +110,11 @@ void cudalabel::reset()
     {        
         delete(cpu_output);
         cpu_output = nullptr;
-    }    
+    }
+    if (!image.empty())
+        image.release();
+    if (!gpuimage.empty())
+        gpuimage.release();
 }
 
 cudalabel::~cudalabel() 
