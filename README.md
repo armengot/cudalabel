@@ -53,7 +53,7 @@ if (labels.imgen())
 
 ## Struct labels
 
-The output ```unsigned int **infolables**``` cas a double pointer, can be show as a 2D array where first column [0] has the id of the bounding box and positions [1-4] store the corner of the bounding box positions.
+The output ```unsigned int **infolables**``` as a double pointer, can be show as a 2D array where first column [0] has the id of the bounding box and positions [1-4] store the corner of the bounding box positions.
 
 | labels |     id | x(0) | x(n) | y(0) | y(n) |
 |--------|--------|------|------|------|------|
