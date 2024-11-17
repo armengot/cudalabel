@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.1/bin/nvcc)
+# set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.1/bin/nvcc)
+set(CMAKE_CUDA_COMPILER /usr/local/cuda-11.7/bin/nvcc)
 
 project(cudalabel VERSION 0.01.0 LANGUAGES CXX CUDA)
 

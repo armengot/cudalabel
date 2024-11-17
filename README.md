@@ -51,6 +51,14 @@ if (labels.imgen())
     labels.lsave(output_name);  
 ```
 
+## Struct labels
+
+| labels |     id | x(0) | x(n) | y(0) | y(n) |
+-----------------------------------------------
+|      0 |  86758 |  741 |  873 |   84 |  216 |
+|      1 | 133306 |  185 |  375 |  130 |  300 |
+
+
 ## Compilation
 Download code and call ```cmake```.
 ```
