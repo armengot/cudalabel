@@ -6,6 +6,41 @@
 
 #include <cudalabel.h>
 
+void show_result(cv::Mat image, unsigned int** info, unsigned int n)
+{
+    // Convert grayscale to color if necessary
+    if (image.channels() == 1)
+    {
+        cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
+    }
+
+    // Iterate through all ROIs
+    for (unsigned int i = 0; i < n; ++i)
+    {
+        if (info[i])
+        {
+            int x_min = info[i][1];
+            int x_max = info[i][2];
+            int y_min = info[i][3];
+            int y_max = info[i][4];
+
+            // Draw the rectangle on the image
+            cv::rectangle(image, cv::Point(x_min, y_min), cv::Point(x_max, y_max), cv::Scalar(0, 255, 0), 2);
+
+            // Print the label information
+            std::cout << "[main] LABEL[" << i << "] = [" << info[i][0] << "," << info[i][1] << "," << info[i][2] << "," << info[i][3] << "," << info[i][4] << "]" << std::endl;
+
+            // Draw the index number below and to the right of (x_min, y_min)
+            cv::Point text_pos(x_min + 10, y_min + 30); // Position slightly below and to the right of the top-left corner
+            cv::putText(image, std::to_string(i), text_pos, cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
+        }
+    }
+
+    // Display the image with drawn rectangles and indices
+    cv::imshow("labels", image);
+    cv::waitKey(0);    
+}
+
 int main(int argc, char **argv) 
 {
     std::string filename;
@@ -16,9 +51,9 @@ int main(int argc, char **argv)
     if (argc < 2) 
     {
         std::cout << "Usage: " << argv[0] << " <image file>" << std::endl;
-        return (-1);
+        return (-1);        
     }
-    filename = argv[1];    
+    filename = argv[1];
     
     // Read image
     cv::Mat image;
@@ -63,26 +98,17 @@ int main(int argc, char **argv)
     labels.labelize();
     n = labels.lnumber();
     std::cout << "[main] Num of labels: " << n << " computed with threshold = " << labels.lmean() << std::endl;
+    
+    // first
     labelinfo = labels.getinfo();
+    show_result(image,labelinfo,n);
+    
+    // clean includes
+    labelinfo = labels.get_clean_includes();
+    n = labels.lnumber();    
+    show_result(image,labelinfo,n);   
 
-    if (image.channels() == 1) 
-    {    
-        cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
-    }    
-    for (unsigned int i = 0; i < n; ++i) 
-    {
-        if (labelinfo[i])
-        {
-            int x_min = labelinfo[i][1];
-            int x_max = labelinfo[i][2];
-            int y_min = labelinfo[i][3];
-            int y_max = labelinfo[i][4];    
-            cv::rectangle(image, cv::Point(x_min, y_min), cv::Point(x_max, y_max), cv::Scalar(0, 255, 0), 2);    
-            std::cout << "[main] LABEL[" << i << "] = [" << labelinfo[i][0] << "," << labelinfo[i][1] << "," << labelinfo[i][2] << "," << labelinfo[i][3] << "," << labelinfo[i][4] << "]" << std::endl;                
-        }
-    }    
-    cv::imshow("labels", image);
-    cv::waitKey(0);
+    // output
     labels.imgen();
     labels.lsave("output.png");    
     return(0);

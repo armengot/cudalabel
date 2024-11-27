@@ -147,3 +147,13 @@ Obtaining the bounding boxes:
 [main] LABEL[23] = [622469,601,661,705,751]
 ```
 ![marv](samples/marv_output.png)
+
+## New clean function
+
+In last release, new available function get_cleaninfo() after first process to clean the labels included in others:
+```
+$ labels.getinfo();
+$ labelinfo = labels.get_cleaninfo();
+$ n = labels.lnumber();
+```
+![marv](samples/marv_output2.png)

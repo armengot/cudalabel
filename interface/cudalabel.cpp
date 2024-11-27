@@ -284,3 +284,105 @@ unsigned int** cudalabel::getinfo()
     }        
     return(gpuinfo);
 }
+
+unsigned int** cudalabel::get_clean_includes()
+{
+    std::vector<std::vector<unsigned int>> tmp; // Temporary storage for valid ROIs
+    std::vector<bool> is_valid(nlabels, true);   // Boolean list to mark valid ROIs
+
+    if (gpuinfo)
+    {
+        for (int i = 0; i < nlabels; ++i)
+        {
+            unsigned int roi_x0 = gpuinfo[i][1];
+            unsigned int roi_x1 = gpuinfo[i][2];
+            unsigned int roi_y0 = gpuinfo[i][3];
+            unsigned int roi_y1 = gpuinfo[i][4];
+
+            cv::Rect r_roi(roi_x0, roi_y0, roi_x1 - roi_x0 + 1, roi_y1 - roi_y0 + 1);
+
+            // Check if r_roi is contained in any other ROI or contains another ROI
+            for (int j = 0; j < nlabels; ++j)
+            {
+                if (i == j)
+                    continue; // Skip comparison with itself
+
+                unsigned int other_x0 = gpuinfo[j][1];
+                unsigned int other_x1 = gpuinfo[j][2];
+                unsigned int other_y0 = gpuinfo[j][3];
+                unsigned int other_y1 = gpuinfo[j][4];
+
+                cv::Rect r_other(other_x0, other_y0, other_x1 - other_x0 + 1, other_y1 - other_y0 + 1);
+
+                // Check if r_roi is contained in r_other or if r_other is contained in r_roi
+                bool r_roi_contains_other = r_roi.contains(cv::Point(other_x0, other_y0)) &&
+                                            r_roi.contains(cv::Point(other_x1, other_y0)) &&
+                                            r_roi.contains(cv::Point(other_x0, other_y1)) &&
+                                            r_roi.contains(cv::Point(other_x1, other_y1));
+
+                bool r_other_contains_roi = r_other.contains(cv::Point(roi_x0, roi_y0)) &&
+                                             r_other.contains(cv::Point(roi_x1, roi_y0)) &&
+                                             r_other.contains(cv::Point(roi_x0, roi_y1)) &&
+                                             r_other.contains(cv::Point(roi_x1, roi_y1));
+
+                // Mark as invalid if one contains the other
+                if (r_roi_contains_other)
+                {
+                    is_valid[j] = false; // Mark the other as invalid if it is contained in r_roi
+                    break; // No need to check further for this ROI
+                }
+                else if (r_other_contains_roi)
+                {
+                    is_valid[i] = false; // Mark r_roi as invalid if it contains the other
+                    break; // No need to check further for this ROI
+                }                
+            }
+        }
+
+        // Now, insert only the valid ROIs into tmp
+        for (int i = 0; i < nlabels; ++i)
+        {
+            if (is_valid[i])
+            {
+                unsigned int roi_x0 = gpuinfo[i][1];
+                unsigned int roi_y0 = gpuinfo[i][2];
+                unsigned int roi_x1 = gpuinfo[i][3];
+                unsigned int roi_y1 = gpuinfo[i][4];
+
+                tmp.push_back({gpuinfo[i][0], roi_x0, roi_y0, roi_x1, roi_y1});
+            }
+        }
+
+        // Free the old gpuinfo memory
+        for (int i = 0; i < nlabels; ++i)
+        {
+            cudaFree(gpuinfo[i]);
+        }
+        cudaFree(gpuinfo);
+        gpuinfo = nullptr;
+
+        // Allocate new gpuinfo based on filtered ROIs
+        nlabels = tmp.size(); // Update label count
+        if (nlabels > 0)
+        {
+            gpuinfo = (unsigned int**)malloc(nlabels * sizeof(unsigned int*));
+            for (int i = 0; i < nlabels; ++i)
+            {
+                gpuinfo[i] = (unsigned int*)malloc(5 * sizeof(unsigned int));
+                for (int j = 0; j < 5; ++j)
+                {
+                    gpuinfo[i][j] = tmp[i][j];
+                }
+            }
+        }
+        else
+        {
+            gpuinfo = nullptr;
+        }
+        return gpuinfo;
+    }
+    else
+    {
+        return nullptr;
+    }
+}

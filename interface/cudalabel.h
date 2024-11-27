@@ -35,8 +35,9 @@ class cudalabel
         /* (3) */
         void labelize();
         /* (4) */
-        unsigned int** getinfo();
+        unsigned int** getinfo();        
         /* optional tools */
+        unsigned int** get_clean_includes();        
         void reset();
         bool imgen();
         void lsave(std::string outputname);
