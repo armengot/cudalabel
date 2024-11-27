@@ -152,8 +152,8 @@ Obtaining the bounding boxes:
 
 In last release, new available function get_cleaninfo() after first process to clean the labels included in others:
 ```
-$ labels.getinfo();
-$ labelinfo = labels.get_cleaninfo();
-$ n = labels.lnumber();
+labels.getinfo();
+labelinfo = labels.get_clean_includes();
+n = labels.lnumber();
 ```
 ![marv](samples/marv_output2.png)
