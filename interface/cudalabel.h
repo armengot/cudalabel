@@ -7,6 +7,14 @@
 #include <opencv2/imgproc.hpp>
 #include <set>
 
+/* standard (CL=) cuda label structure */
+typedef struct
+{
+    unsigned int **info;
+    unsigned int n;
+}stdcl;
+
+
 class cudalabel
 {
     private:
@@ -37,7 +45,9 @@ class cudalabel
         /* (4) */
         unsigned int** getinfo();        
         /* optional tools */
-        unsigned int** get_clean_includes();        
+        unsigned int** get_clean_includes();
+        stdcl stdvector_2stdcl(const std::vector<std::vector<unsigned int>>& tmp);
+        void free_external_stdcl(stdcl& external);
         void reset();
         bool imgen();
         void lsave(std::string outputname);

@@ -386,3 +386,73 @@ unsigned int** cudalabel::get_clean_includes()
         return nullptr;
     }
 }
+
+
+
+/**
+ * @brief Function to convert std::vector<std::vector<unsigned int>> to stdcl
+ * @param Vector of uint (5) vector
+ */
+stdcl cudalabel::stdvector_2stdcl(const std::vector<std::vector<unsigned int>>& tmp) 
+{
+    stdcl result;
+    result.n = tmp.size();
+
+    if (result.n > 0) 
+    {    
+        result.info = (unsigned int **)malloc(result.n * sizeof(unsigned int *));
+        if (!result.info) 
+        {            
+            result.n = 0;
+            return result;
+        }
+
+        // Allocate and copy
+        for (unsigned int i = 0; i < result.n; ++i) 
+        {
+            result.info[i] = (unsigned int *)malloc(5 * sizeof(unsigned int));
+            if (!result.info[i]) 
+            {             
+                for (unsigned int j = 0; j < i; ++j) 
+                {
+                    free(result.info[j]);
+                }
+                free(result.info);
+                result.info = nullptr;
+                result.n = 0;
+                return result;
+            }            
+            for (unsigned int j = 0; j < 5; ++j) 
+            {
+                result.info[i][j] = tmp[i][j];
+            }
+        }
+    } 
+    else 
+    {
+        result.info = nullptr;
+    }
+
+    return result;
+}
+
+/**
+ * @brief Function to free memory allocated for a stdcl structure
+ */
+void cudalabel::free_external_stdcl(stdcl& external) 
+{
+    if (external.info) 
+    {
+        for (unsigned int i = 0; i < external.n; ++i) 
+        {
+            if (external.info[i]) 
+            {
+                free(external.info[i]);
+            }
+        }
+        free(external.info);
+        external.info = nullptr;
+    }
+    external.n = 0;
+}
+

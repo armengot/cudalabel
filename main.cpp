@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     std::string filename;
     cudalabel labels;
     unsigned int** labelinfo;
-    unsigned int n;
+    unsigned int n,i;
     
     if (argc < 2) 
     {
@@ -100,13 +100,34 @@ int main(int argc, char **argv)
     std::cout << "[main] Num of labels: " << n << " computed with threshold = " << labels.lmean() << std::endl;
     
     // first
+    std::cout << "Show of basic labels computed." << std::endl;
     labelinfo = labels.getinfo();
     show_result(image,labelinfo,n);
     
     // clean includes
+    std::cout << "Show of labels computed without inclusions." << std::endl;
     labelinfo = labels.get_clean_includes();
     n = labels.lnumber();    
-    show_result(image,labelinfo,n);   
+    show_result(image,labelinfo,n);
+
+    // your own logic
+    std::cout << "Show of labels with selection from user criteria." << std::endl;
+    std::vector<std::vector<unsigned int>> tmp;
+    for(i=0;i<n;++i)
+    {
+        if(labelinfo[i])
+        {
+            unsigned int area = (labelinfo[i][3]-labelinfo[i][2])*(labelinfo[i][5]-labelinfo[i][4]);
+            if (area>200000)
+            {
+                tmp.push_back({labelinfo[i][0],labelinfo[i][1],labelinfo[i][2],labelinfo[i][3],labelinfo[i][4]});
+                std::cout << "LABEL [" << i << " " << labelinfo[i][0] << "] area: " << area << std::endl;
+            }
+        }
+    }
+    stdcl my_selection = labels.stdvector_2stdcl(tmp);
+    show_result(image,my_selection.info,my_selection.n);
+    labels.free_external_stdcl(my_selection);
 
     // output
     labels.imgen();
